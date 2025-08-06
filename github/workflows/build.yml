@@ -1,0 +1,39 @@
+name: Build Android APK
+on:
+  push:
+    branches: [main]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.8'
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y build-essential git python3-dev ffmpeg libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev openjdk-8-jdk
+        pip install buildozer
+    - name: Initialize Buildozer
+      run: |
+        buildozer init
+    - name: Configure Buildozer
+      run: |
+        sed -i 's/requirements = .*/requirements = python3,kivy==2.2.1,pyjnius,plyer,difflib/' buildozer.spec
+        sed -i 's/#icon = .*/icon = icon.ico/' buildozer.spec
+        sed -i 's/android.permissions = .*/android.permissions = INTERNET,ACCESS_NETWORK_STATE/' buildozer.spec
+        sed -i 's/title = .*/title = Citations Positives/' buildozer.spec
+        sed -i 's/package.name = .*/package.name = citationspositives/' buildozer.spec
+        sed -i 's/package.domain = .*/package.domain = org.example/' buildozer.spec
+        sed -i 's/version = .*/version = 1.0/' buildozer.spec
+        sed -i 's/orientation = .*/orientation = portrait/' buildozer.spec
+    - name: Build APK
+      run: |
+        buildozer android debug
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: apk
+        path: bin/*.apk
